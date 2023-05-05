@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Main processing functions
 function processAllTemplateAndSourcePairs() {
-  const templateElements = getAllTemplateElements();
-  const sourceElements = getAllSourceElements();
+  let templateElements = getAllTemplateElements();
+  let sourceElements = getAllSourceElements();
 
   checkTemplateSourcePairCount(templateElements, sourceElements);
   checkNestedTemplateAndSource(templateElements, sourceElements);
@@ -29,6 +29,8 @@ function processTemplateAndSource(templateElement, sourceElement) {
   let currentTemplateElement = initializeCurrentTemplateElement(noMultiply, templateElement);
 
   let iteratorCounts = initializeIteratorCounts(mappingElementCounts);
+  
+  // console.log(getMappingElementValue(templateElement) + getMappingElementValue(sourceElement));
 
   sourceChildElements.forEach((sourceChildElement) => {
     if (!noMultiply && isMultiplierElement(sourceChildElement, multiplierElementTag)) {
@@ -54,6 +56,9 @@ const checkNoMultiply = (templateElement) => templateElement.hasAttribute('ms-ma
 const getMultiplierElementTag = (multiplierElement) => multiplierElement ? multiplierElement.getAttribute('ms-mapping-tag') : null;
 
 // Functions for checking and reporting errors
+const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
+const getMappingTagValue = (element) => element.getAttribute('ms-mapping-tag') || "";
+
 function checkTemplateSourcePairCount(templateElements, sourceElements) {
   if (templateElements.length !== sourceElements.length) {
     console.error(`The number of template (${templateElements.length}) and source (${sourceElements.length}) elements must be equal.`);
@@ -65,10 +70,7 @@ function checkNestedTemplateAndSource(templateElements, sourceElements) {
   templateElements.forEach((templateElement) => {
     sourceElements.forEach((sourceElement) => {
       if (templateElement.contains(sourceElement) || sourceElement.contains(templateElement)) {
-        const templateClassName = templateElement.className ? ` (class="${templateElement.className}")` : '';
-        const sourceClassName = sourceElement.className ? ` (class="${sourceElement.className}")` : '';
-
-        console.error(`A source element${sourceClassName} is nested inside a template element${templateClassName} or vice versa. Please ensure that template and source elements are not nested within each other.`);
+        console.error(`A source element ms-mapping-element="${getMappingElementValue(sourceElement)}" is nested inside a template element ms-mapping-element="${getMappingElementValue(templateElement)} or vice versa. Please ensure that template and source elements are not nested within each other.`);
         throw new Error('Nested template and source elements are not allowed.');
       }
     });
@@ -94,8 +96,7 @@ function getMultiplierElement(templateElement, noMultiply) {
   }
   const multiplierElements = templateElement.querySelectorAll('[ms-mapping-element="multiplier"]');
   if (multiplierElements.length !== 1) {
-    const className = templateElement.className ? ` (class="${templateElement.className}")` : '';
-    console.error(`There should be only one multiplier element within a template element${className}. Found ${multiplierElements.length} multiplier elements.`);
+    console.error(`There should be only one multiplier element ms-mapping-element="${getMappingElementValue(templateElement)}". Found ${multiplierElements.length} multiplier elements.`);
     return null;
   }
 
@@ -103,8 +104,7 @@ function getMultiplierElement(templateElement, noMultiply) {
   const multiplierTag = multiplierElement.getAttribute('ms-mapping-tag');
   
   if (multiplierTag.includes('-')) {
-    const className = multiplierElement.className ? ` (class="${multiplierElement.className}")` : '';
-    console.error(`The element${className} has ms-mapping-tag="${multiplierTag}". Please remove the dash and any characters following it in the ms-mapping-tag attribute.`);
+    console.error(`The element ms-mapping-element="${getMappingElementValue(multiplierElement)}" has ms-mapping-tag="${multiplierTag}". Please remove the dash and any characters following it in the ms-mapping-tag attribute.`);
     return null;
   }
 
@@ -163,6 +163,10 @@ const isMappingElement = (sourceChildElement, mappingElements) => {
 
 // Updates the target element in the current template element based on the source child element
 function updateTargetElement(currentTemplateElement, sourceChildElement, tagWithIteratorSuffix) {
+  if (!currentTemplateElement) {
+    return;
+  }
+
   const sourceElementTag = sourceChildElement.tagName.toLowerCase();
   let targetElement = currentTemplateElement.querySelector(`[ms-mapping-tag="${tagWithIteratorSuffix}"]`);
 
