@@ -18,22 +18,20 @@ function processAllTemplateAndSourcePairs() {
 }
 
 function processTemplateAndSource(templateElement, sourceElement) {
-  const noMultiply = checkNoMultiply(templateElement);
-  const multiplierElement = getMultiplierElement(templateElement, noMultiply);
+  const noRepeat = checkNoRepeat(templateElement);
+  const repeaterElement = getRepeaterElement(templateElement, noRepeat);
 
   const mappingElements = getMappingElements(templateElement);
   const mappingElementCounts = getMappingElementCounts(mappingElements);
-  const multiplierElementTag = getMultiplierElementTag(multiplierElement);
+  const repeaterElementTag = getRepeaterElementTag(repeaterElement);
 
   const sourceChildElements = getSourceChildElements(sourceElement);
-  let currentTemplateElement = initializeCurrentTemplateElement(noMultiply, templateElement);
+  let currentTemplateElement = initializeCurrentTemplateElement(noRepeat, templateElement);
 
   let iteratorCounts = initializeIteratorCounts(mappingElementCounts);
   
-  // console.log(getMappingElementValue(templateElement) + getMappingElementValue(sourceElement));
-
   sourceChildElements.forEach((sourceChildElement) => {
-    if (!noMultiply && isMultiplierElement(sourceChildElement, multiplierElementTag)) {
+    if (!noRepeat && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
       currentTemplateElement = cloneAndInsertTemplate(templateElement);
       iteratorCounts = initializeIteratorCounts(mappingElementCounts);
     }
@@ -44,7 +42,7 @@ function processTemplateAndSource(templateElement, sourceElement) {
     }
   });
 
-  removeOriginalElements(noMultiply, templateElement, sourceElement);
+  removeOriginalElements(noRepeat, templateElement, sourceElement);
 }
 
 // Functions for getting elements and attributes
@@ -52,8 +50,8 @@ const getAllTemplateElements = () => Array.from(document.querySelectorAll('[ms-m
 const getAllSourceElements = () => Array.from(document.querySelectorAll('[ms-mapping-element^="source"]'));
 const getSourceChildElements = (sourceElement) => sourceElement.querySelectorAll('*');
 
-const checkNoMultiply = (templateElement) => templateElement.hasAttribute('ms-mapping-nomultiply');
-const getMultiplierElementTag = (multiplierElement) => multiplierElement ? multiplierElement.getAttribute('ms-mapping-tag') : null;
+const checkNoRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-norepeat');
+const getRepeaterElementTag = (repeaterElement) => repeaterElement ? repeaterElement.getAttribute('ms-mapping-tag') : null;
 
 // Functions for checking and reporting errors
 const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
@@ -78,37 +76,37 @@ function checkNestedTemplateAndSource(templateElements, sourceElements) {
 }
 
 // Functions for handling the main processing logic
-function initializeCurrentTemplateElement(noMultiply, templateElement) {
-  return noMultiply ? templateElement : null;
+function initializeCurrentTemplateElement(noRepeat, templateElement) {
+  return noRepeat ? templateElement : null;
 }
 
-function removeOriginalElements(noMultiply, templateElement, sourceElement) {
-  if (!noMultiply) {
+function removeOriginalElements(noRepeat, templateElement, sourceElement) {
+  if (!noRepeat) {
     templateElement.remove();
   }
   sourceElement.remove();
 }
 
 // Functions for working with template elements and source elements
-function getMultiplierElement(templateElement, noMultiply) {
-  if (noMultiply) {
+function getRepeaterElement(templateElement, noRepeat) {
+  if (noRepeat) {
     return null;
   }
-  const multiplierElements = templateElement.querySelectorAll('[ms-mapping-element="multiplier"]');
-  if (multiplierElements.length !== 1) {
-    console.error(`There should be only one multiplier element ms-mapping-element="${getMappingElementValue(templateElement)}". Found ${multiplierElements.length} multiplier elements.`);
+  const repeaterElements = templateElement.querySelectorAll('[ms-mapping-element="repeater"]');
+  if (repeaterElements.length !== 1) {
+    console.error(`There should be only one repeater element ms-mapping-element="${getMappingElementValue(templateElement)}". Found ${repeaterElements.length} repeater elements.`);
     return null;
   }
 
-  const multiplierElement = multiplierElements[0];
-  const multiplierTag = multiplierElement.getAttribute('ms-mapping-tag');
+  const repeaterElement = repeaterElements[0];
+  const repeaterTag = repeaterElement.getAttribute('ms-mapping-tag');
   
-  if (multiplierTag.includes('-')) {
-    console.error(`The element ms-mapping-element="${getMappingElementValue(multiplierElement)}" has ms-mapping-tag="${multiplierTag}". Please remove the dash and any characters following it in the ms-mapping-tag attribute.`);
+  if (repeaterTag.includes('-')) {
+    console.error(`The element ms-mapping-element="${getMappingElementValue(repeaterElement)}" has ms-mapping-tag="${repeaterTag}". Please remove the dash and any characters following it in the ms-mapping-tag attribute.`);
     return null;
   }
 
-  return multiplierElement;
+  return repeaterElement;
 }
 
 function getMappingElementCounts(mappingElements) {
@@ -148,9 +146,9 @@ const cloneAndInsertTemplate = (templateElement) => {
   return clonedTemplate;
 }
 
-// Checks if the source child element is a multiplier element
-const isMultiplierElement = (sourceChildElement, multiplierElementTag) =>
-  sourceChildElement.tagName.toLowerCase() === multiplierElementTag;
+// Checks if the source child element is a repeater element
+const isRepeaterElement = (sourceChildElement, repeaterElementTag) =>
+  sourceChildElement.tagName.toLowerCase() === repeaterElementTag;
 
 // Checks if the source child element is a mapping element
 const isMappingElement = (sourceChildElement, mappingElements) => {
@@ -174,14 +172,26 @@ function updateTargetElement(currentTemplateElement, sourceChildElement, tagWith
     targetElement = currentTemplateElement.querySelector(`[ms-mapping-tag="${sourceElementTag}"]`);
   }
 
-  // If targetElement is not found, ignore the sourceChildElement and return
+  // If targetElement is not found, ignore the sourceChildElement and return.
   if (!targetElement) {
+    console.warn(`The source element with tag ${sourceChildElement.tagName} doesn't have a corresponding target element in the template.`);
     return;
   }
 
-  if (sourceElementTag === 'img') {
-    targetElement.src = sourceChildElement.src;
-  } else {
-    targetElement.innerHTML = sourceChildElement.innerHTML;
-  }
+  updateElement(targetElement, sourceChildElement);
+}
+
+// Updates the target element based on the source element
+function updateElement(targetElement, sourceElement) {
+  targetElement.textContent = sourceElement.textContent;
+
+  Array.from(sourceElement.attributes).forEach(attribute => {
+    if (!attribute.name.startsWith('ms-')) {
+      targetElement.setAttribute(attribute.name, attribute.value);
+    }
+  });
+
+  // Remove the mapping attributes from the target element
+  targetElement.removeAttribute('ms-mapping-element');
+  targetElement.removeAttribute('ms-mapping-tag');
 }
