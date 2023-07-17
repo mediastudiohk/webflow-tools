@@ -228,7 +228,7 @@ function updateTargetElement(currentTemplateElement, sourceChildElement, tagWith
 
 // Updates the target element based on the source element
 function updateElement(targetElement, sourceElement) {
-  targetElement.textContent = sourceElement.textContent;
+  targetElement.innerHTML = sourceElement.innerHTML;
 
   Array.from(sourceElement.attributes).forEach(attribute => {
     if (!attribute.name.startsWith('ms-')) {
