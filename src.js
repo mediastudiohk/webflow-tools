@@ -26,10 +26,12 @@ function processTemplateAndSource(templateElement, sourceElement) {
   const repeaterElementTag = getRepeaterElementTag(repeaterElement);
 
   const sourceChildElements = getSourceChildElements(sourceElement);
+  validateSourceElements(templateElement, sourceChildElements); // Validate source elements before processing
+  
   let currentTemplateElement = initializeCurrentTemplateElement(noRepeat, templateElement);
 
   let iteratorCounts = initializeIteratorCounts(mappingElementCounts);
-  
+
   sourceChildElements.forEach((sourceChildElement) => {
     if (!noRepeat && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
       currentTemplateElement = cloneAndInsertTemplate(templateElement);
@@ -146,6 +148,7 @@ const cloneAndInsertTemplate = (templateElement) => {
   return clonedTemplate;
 }
 
+// Validation functions
 // Checks if the source child element is a repeater element
 const isRepeaterElement = (sourceChildElement, repeaterElementTag) =>
   sourceChildElement.tagName.toLowerCase() === repeaterElementTag;
@@ -159,6 +162,26 @@ const isMappingElement = (sourceChildElement, mappingElements) => {
   });
 }
 
+// Function to check for missing source elements corresponding to mapping tags in the template
+function validateSourceElements(templateElement, sourceChildElements) {
+  const mappingTagsInTemplate = getMappingElements(templateElement);
+  const sourceElementTags = Array.from(sourceChildElements).map(el => el.tagName.toLowerCase());
+
+  mappingTagsInTemplate.forEach(mappingTag => {
+    const [baseTag] = mappingTag.split('-');
+    if (!sourceElementTags.includes(baseTag)) {
+      const templateElementValue = getMappingElementValue(templateElement);
+      console.warn(`Warning: a mapping tag "${mappingTag}" in the template element with ms-mapping-element="${templateElementValue}" does not have a corresponding source element.`);
+    }
+  });
+}
+
+// Unused
+function isValidTagName(tag) {
+  const validTagNameRegex = /^[a-z]+(-\d*[1-9]\d*)?$/i;
+  return validTagNameRegex.test(tag);
+}
+
 // Updates the target element in the current template element based on the source child element
 function updateTargetElement(currentTemplateElement, sourceChildElement, tagWithIteratorSuffix) {
   if (!currentTemplateElement) {
@@ -166,19 +189,21 @@ function updateTargetElement(currentTemplateElement, sourceChildElement, tagWith
   }
 
   const sourceElementTag = sourceChildElement.tagName.toLowerCase();
-  let targetElement = currentTemplateElement.querySelector(`[ms-mapping-tag="${tagWithIteratorSuffix}"]`);
+  let targetElements = currentTemplateElement.querySelectorAll(`[ms-mapping-tag="${tagWithIteratorSuffix}"]`);
 
-  if (!targetElement) {
-    targetElement = currentTemplateElement.querySelector(`[ms-mapping-tag="${sourceElementTag}"]`);
+  if (!targetElements.length) {
+    targetElements = currentTemplateElement.querySelectorAll(`[ms-mapping-tag="${sourceElementTag}"]`);
   }
 
-  // If targetElement is not found, ignore the sourceChildElement and return.
-  if (!targetElement) {
-    console.warn(`The source element with tag ${sourceChildElement.tagName} doesn't have a corresponding target element in the template.`);
+  // If targetElements are not found, ignore the sourceChildElement and return.
+  if (!targetElements.length) {
+    const templateElementValue = getMappingElementValue(currentTemplateElement);
+    const sourceElementValue = getMappingElementValue(sourceChildElement.parentNode);
+    console.warn(`Warning: The source element with tag ${sourceChildElement.tagName} in the source element with ms-mapping-element="${sourceElementValue}" does not have a corresponding target element in the template element with ms-mapping-element="${templateElementValue}".`);
     return;
   }
 
-  updateElement(targetElement, sourceChildElement);
+  targetElements.forEach(targetElement => updateElement(targetElement, sourceChildElement));
 }
 
 // Updates the target element based on the source element
