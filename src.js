@@ -1,9 +1,9 @@
-// Event listener to start processing when the DOM is fully loaded
+// 1. Initialization
 document.addEventListener('DOMContentLoaded', () => {
   processAllTemplateAndSourcePairs();
 });
 
-// Main processing functions
+// 2. Main Processing Functions
 function processAllTemplateAndSourcePairs() {
   let templateElements = getAllTemplateElements();
   let sourceElements = getAllSourceElements();
@@ -47,18 +47,12 @@ function processTemplateAndSource(templateElement, sourceElement) {
   removeOriginalElements(noRepeat, templateElement, sourceElement);
 }
 
-// Functions for getting elements and attributes
+// 3. Functions for Getting Elements and Attributes
 const getAllTemplateElements = () => Array.from(document.querySelectorAll('[ms-mapping-element^="template"]'));
 const getAllSourceElements = () => Array.from(document.querySelectorAll('[ms-mapping-element^="source"]'));
 const getSourceChildElements = (sourceElement) => sourceElement.querySelectorAll('*');
 
-const checkNoRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-norepeat');
-const getRepeaterElementTag = (repeaterElement) => repeaterElement ? repeaterElement.getAttribute('ms-mapping-tag') : null;
-
-// Functions for checking and reporting errors
-const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
-const getMappingTagValue = (element) => element.getAttribute('ms-mapping-tag') || "";
-
+// 4. Error Reporting and Validation Functions
 function checkTemplateSourcePairCount(templateElements, sourceElements) {
   if (templateElements.length !== sourceElements.length) {
     console.error(`The number of template (${templateElements.length}) and source (${sourceElements.length}) elements must be equal.`);
@@ -77,7 +71,39 @@ function checkNestedTemplateAndSource(templateElements, sourceElements) {
   });
 }
 
-// Functions for handling the main processing logic
+function isValidTagName(tag) {
+  const validTagNameRegex = /^[a-zA-Z]+\d*(-[1-9]\d*)?$/;
+  return validTagNameRegex.test(tag);
+}
+
+// Check for missing source elements corresponding to mapping tags in the template
+function validateSourceElements(templateElement, sourceChildElements) {
+  const mappingTagsInTemplate = getMappingElements(templateElement);
+  const sourceElementTags = Array.from(sourceChildElements).map(el => el.tagName.toLowerCase());
+
+  mappingTagsInTemplate.forEach(mappingTag => {
+    const [baseTag] = mappingTag.split('-');
+    if (!sourceElementTags.includes(baseTag)) {
+      const templateElementValue = getMappingElementValue(templateElement);
+      console.warn(`Warning: a mapping tag "${mappingTag}" in the template element with ms-mapping-element="${templateElementValue}" does not have a corresponding source element.`);
+    }
+  });
+}
+
+// Checks if the source child element is a repeater element
+const isRepeaterElement = (sourceChildElement, repeaterElementTag) =>
+  sourceChildElement.tagName.toLowerCase() === repeaterElementTag;
+
+// Checks if the source child element is a mapping element
+const isMappingElement = (sourceChildElement, mappingElements) => {
+  const sourceElementTag = sourceChildElement.tagName.toLowerCase();
+  return mappingElements.some(mappingElement => {
+    const [tag] = mappingElement.split('-');
+    return tag === sourceElementTag;
+  });
+}
+
+// 5. Functions for Processing Logic
 function initializeCurrentTemplateElement(noRepeat, templateElement) {
   return noRepeat ? templateElement : null;
 }
@@ -89,7 +115,13 @@ function removeOriginalElements(noRepeat, templateElement, sourceElement) {
   sourceElement.remove();
 }
 
-// Functions for working with template elements and source elements
+// 6. Functions for Working with Template Elements and Source Elements
+const checkNoRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-norepeat');
+const getRepeaterElementTag = (repeaterElement) => repeaterElement ? repeaterElement.getAttribute('ms-mapping-tag') : null;
+
+const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
+const getMappingTagValue = (element) => element.getAttribute('ms-mapping-tag') || "";
+
 function getRepeaterElement(templateElement, noRepeat) {
   if (noRepeat) {
     return null;
@@ -157,40 +189,7 @@ const cloneAndInsertTemplate = (templateElement) => {
   return clonedTemplate;
 }
 
-// Validation functions
-// Checks if the source child element is a repeater element
-const isRepeaterElement = (sourceChildElement, repeaterElementTag) =>
-  sourceChildElement.tagName.toLowerCase() === repeaterElementTag;
-
-// Checks if the source child element is a mapping element
-const isMappingElement = (sourceChildElement, mappingElements) => {
-  const sourceElementTag = sourceChildElement.tagName.toLowerCase();
-  return mappingElements.some(mappingElement => {
-    const [tag] = mappingElement.split('-');
-    return tag === sourceElementTag;
-  });
-}
-
-// Function to check for missing source elements corresponding to mapping tags in the template
-function validateSourceElements(templateElement, sourceChildElements) {
-  const mappingTagsInTemplate = getMappingElements(templateElement);
-  const sourceElementTags = Array.from(sourceChildElements).map(el => el.tagName.toLowerCase());
-
-  mappingTagsInTemplate.forEach(mappingTag => {
-    const [baseTag] = mappingTag.split('-');
-    if (!sourceElementTags.includes(baseTag)) {
-      const templateElementValue = getMappingElementValue(templateElement);
-      console.warn(`Warning: a mapping tag "${mappingTag}" in the template element with ms-mapping-element="${templateElementValue}" does not have a corresponding source element.`);
-    }
-  });
-}
-
-function isValidTagName(tag) {
-  const validTagNameRegex = /^[a-zA-Z]+\d*(-[1-9]\d*)?$/;
-  return validTagNameRegex.test(tag);
-}
-
-// Updates the target element in the current template element based on the source child element
+// 7. Update Functions
 function updateTargetElement(currentTemplateElement, sourceChildElement, tagWithIteratorSuffix) {
   if (!currentTemplateElement) {
     return;
