@@ -138,8 +138,17 @@ function getTagWithIteratorSuffix(tag, iteratorCounts) {
 }
 
 // Gets the mapping elements within the template element
-const getMappingElements = (templateElement) => Array.from(templateElement.querySelectorAll('[ms-mapping-tag]'))
-  .map(el => el.getAttribute('ms-mapping-tag'));
+function getMappingElements(templateElement) {
+  const elements = Array.from(templateElement.querySelectorAll('[ms-mapping-tag]'));
+  elements.forEach((el) => {
+    const tag = el.getAttribute('ms-mapping-tag');
+    if (!isValidTagName(tag)) {
+      console.error(`Invalid ms-mapping-tag attribute: "${tag}". It must be either a valid HTML tag name, or a valid HTML tag name followed by a dash and a positive integer. Examples of valid attributes include "p", "p-1", "div-2", etc.`);
+      throw new Error('Invalid ms-mapping-tag');
+    }
+  });
+  return elements.map(el => el.getAttribute('ms-mapping-tag'));
+}
 
 // Clones the template element and inserts it before the original template element
 const cloneAndInsertTemplate = (templateElement) => {
@@ -176,9 +185,8 @@ function validateSourceElements(templateElement, sourceChildElements) {
   });
 }
 
-// Unused
 function isValidTagName(tag) {
-  const validTagNameRegex = /^[a-z]+(-\d*[1-9]\d*)?$/i;
+  const validTagNameRegex = /^[a-zA-Z]+\d*(-[1-9]\d*)?$/;
   return validTagNameRegex.test(tag);
 }
 
