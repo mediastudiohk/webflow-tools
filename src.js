@@ -31,8 +31,8 @@ function processAllTemplateAndSourcePairs() {
 }
 
 function processTemplateAndSource(templateElement, sourceElement) {
-  const noRepeat = checkNoRepeat(templateElement);
-  const repeaterElement = getRepeaterElement(templateElement, noRepeat);
+  const repeat = shouldRepeat(templateElement);
+  const repeaterElement = getRepeaterElement(templateElement, repeat);
 
   const mappingElements = getMappingElements(templateElement);
   const mappingElementCounts = getMappingElementCounts(mappingElements);
@@ -41,12 +41,12 @@ function processTemplateAndSource(templateElement, sourceElement) {
   const sourceChildElements = getSourceChildElements(sourceElement);
   validateSourceElements(templateElement, sourceChildElements);
   
-  let currentTemplateElement = initializeCurrentTemplateElement(noRepeat, templateElement);
+  let currentTemplateElement = initializeCurrentTemplateElement(repeat, templateElement);
 
   let iteratorCounts = initializeIteratorCounts(mappingElementCounts);
 
   sourceChildElements.forEach((sourceChildElement) => {
-    if (!noRepeat && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
+    if (repeat && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
       currentTemplateElement = cloneAndInsertTemplate(templateElement);
       iteratorCounts = initializeIteratorCounts(mappingElementCounts);
     }
@@ -57,7 +57,7 @@ function processTemplateAndSource(templateElement, sourceElement) {
     }
   });
 
-  removeOriginalElements(noRepeat, templateElement, sourceElement);
+  removeOriginalElements(repeat, templateElement, sourceElement);
 }
 
 // 3. Functions for Getting Elements and Attributes
@@ -117,26 +117,26 @@ const isMappingElement = (sourceChildElement, mappingElements) => {
 }
 
 // 5. Functions for Processing Logic
-function initializeCurrentTemplateElement(noRepeat, templateElement) {
-  return noRepeat ? templateElement : null;
+function initializeCurrentTemplateElement(repeat, templateElement) {
+  return repeat ? null : templateElement;
 }
 
-function removeOriginalElements(noRepeat, templateElement, sourceElement) {
-  if (!noRepeat) {
+function removeOriginalElements(repeat, templateElement, sourceElement) {
+  if (repeat) {
     templateElement.remove();
   }
   sourceElement.remove();
 }
 
 // 6. Functions for Working with Template Elements and Source Elements
-const checkNoRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-norepeat');
+const shouldRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-repeater') && templateElement.getAttribute('ms-mapping-repeater') === "true";
 const getRepeaterElementTag = (repeaterElement) => repeaterElement ? repeaterElement.getAttribute('ms-mapping-tag') : null;
 
 const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
 const getMappingTagValue = (element) => element.getAttribute('ms-mapping-tag') || "";
 
-function getRepeaterElement(templateElement, noRepeat) {
-  if (noRepeat) {
+function getRepeaterElement(templateElement, repeat) {
+  if (!repeat) {
     return null;
   }
   const repeaterElements = templateElement.querySelectorAll('[ms-mapping-element="repeater"]');
