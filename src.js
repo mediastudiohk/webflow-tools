@@ -1,7 +1,20 @@
 // 1. Initialization
 document.addEventListener('DOMContentLoaded', () => {
+  if (!isCompatibleBrowser()) {
+    console.error('Your browser is not compatible with this application. Please update to the latest version or use a modern browser.');
+    return;
+  }
+
   processAllTemplateAndSourcePairs();
 });
+
+function isCompatibleBrowser() {
+  return typeof Array.from === 'function' &&
+         typeof document.querySelector === 'function' &&
+         typeof document.querySelectorAll === 'function' &&
+         'textContent' in document.createElement('div') &&
+         'cloneNode' in document.createElement('div');
+}
 
 // 2. Main Processing Functions
 function processAllTemplateAndSourcePairs() {
@@ -26,7 +39,7 @@ function processTemplateAndSource(templateElement, sourceElement) {
   const repeaterElementTag = getRepeaterElementTag(repeaterElement);
 
   const sourceChildElements = getSourceChildElements(sourceElement);
-  validateSourceElements(templateElement, sourceChildElements); // Validate source elements before processing
+  validateSourceElements(templateElement, sourceChildElements);
   
   let currentTemplateElement = initializeCurrentTemplateElement(noRepeat, templateElement);
 
