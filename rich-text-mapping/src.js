@@ -1,4 +1,4 @@
-// 1. Initialization
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
   if (!isCompatibleBrowser()) {
     console.error('Your browser is not compatible with this application. Please update to the latest version or use a modern browser.');
@@ -16,7 +16,7 @@ function isCompatibleBrowser() {
          'cloneNode' in document.createElement('div');
 }
 
-// 2. Main Processing Functions
+// Main Processing Functions
 function processAllTemplateAndSourcePairs() {
   let templateElements = getAllTemplateElements();
   let sourceElements = getAllSourceElements();
@@ -31,22 +31,21 @@ function processAllTemplateAndSourcePairs() {
 }
 
 function processTemplateAndSource(templateElement, sourceElement) {
-  const repeat = shouldRepeat(templateElement);
-  const repeaterElement = getRepeaterElement(templateElement, repeat);
+  const repeaterTag = getRepeaterTag(templateElement);
+  const repeaterElementTag = repeaterTag ? repeaterTag.toLowerCase() : null;
 
   const mappingElements = getMappingElements(templateElement);
   const mappingElementCounts = getMappingElementCounts(mappingElements);
-  const repeaterElementTag = getRepeaterElementTag(repeaterElement);
 
   const sourceChildElements = getSourceChildElements(sourceElement);
   validateSourceElements(templateElement, sourceChildElements);
   
-  let currentTemplateElement = initializeCurrentTemplateElement(repeat, templateElement);
+  let currentTemplateElement = initializeCurrentTemplateElement(repeaterTag, templateElement);
 
   let iteratorCounts = initializeIteratorCounts(mappingElementCounts);
 
   sourceChildElements.forEach((sourceChildElement) => {
-    if (repeat && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
+    if (repeaterTag && isRepeaterElement(sourceChildElement, repeaterElementTag)) {
       currentTemplateElement = cloneAndInsertTemplate(templateElement);
       iteratorCounts = initializeIteratorCounts(mappingElementCounts);
     }
@@ -57,15 +56,15 @@ function processTemplateAndSource(templateElement, sourceElement) {
     }
   });
 
-  removeOriginalElements(repeat, templateElement, sourceElement);
+  removeOriginalElements(repeaterTag, templateElement, sourceElement);
 }
 
-// 3. Functions for Getting Elements and Attributes
+// Functions for Getting Elements and Attributes
 const getAllTemplateElements = () => Array.from(document.querySelectorAll('[ms-mapping-element^="template"]'));
 const getAllSourceElements = () => Array.from(document.querySelectorAll('[ms-mapping-element^="source"]'));
 const getSourceChildElements = (sourceElement) => sourceElement.querySelectorAll('*');
 
-// 4. Error Reporting and Validation Functions
+// Error Reporting and Validation Functions
 function checkTemplateSourcePairCount(templateElements, sourceElements) {
   if (templateElements.length !== sourceElements.length) {
     console.error(`The number of template (${templateElements.length}) and source (${sourceElements.length}) elements must be equal.`);
@@ -84,8 +83,13 @@ function checkNestedTemplateAndSource(templateElements, sourceElements) {
   });
 }
 
-function isValidTagName(tag) {
+function isValidTagN(tag) {
   const validTagNameRegex = /^[a-zA-Z]+\d*(-[1-9]\d*)?$/;
+  return validTagNameRegex.test(tag);
+}
+
+function isValidTag(tag) {
+  const validTagNameRegex = /^[a-z][a-z0-9]*$/;
   return validTagNameRegex.test(tag);
 }
 
@@ -116,44 +120,28 @@ const isMappingElement = (sourceChildElement, mappingElements) => {
   });
 }
 
-// 5. Functions for Processing Logic
-function initializeCurrentTemplateElement(repeat, templateElement) {
-  return repeat ? null : templateElement;
+// Functions for Processing Logic
+function initializeCurrentTemplateElement(repeaterTag, templateElement) {
+  return repeaterTag ? null : templateElement;
 }
 
-function removeOriginalElements(repeat, templateElement, sourceElement) {
-  if (repeat) {
+function removeOriginalElements(repeaterTag, templateElement, sourceElement) {
+  if (repeaterTag) {
     templateElement.remove();
   }
   sourceElement.remove();
 }
 
-// 6. Functions for Working with Template Elements and Source Elements
-const shouldRepeat = (templateElement) => templateElement.hasAttribute('ms-mapping-repeater') && templateElement.getAttribute('ms-mapping-repeater') === "true";
-const getRepeaterElementTag = (repeaterElement) => repeaterElement ? repeaterElement.getAttribute('ms-mapping-tag') : null;
-
+// Functions for Working with Template Elements and Source Elements
 const getMappingElementValue = (element) => element.getAttribute('ms-mapping-element') || "";
 const getMappingTagValue = (element) => element.getAttribute('ms-mapping-tag') || "";
 
-function getRepeaterElement(templateElement, repeat) {
-  if (!repeat) {
-    return null;
+function getRepeaterTag(templateElement) {
+  const repeaterTag = templateElement.getAttribute('ms-mapping-repeatertag');
+  if (repeaterTag) {
+    isValidTag(repeaterTag);
   }
-  const repeaterElements = templateElement.querySelectorAll('[ms-mapping-element="repeater"]');
-  if (repeaterElements.length !== 1) {
-    console.error(`There should be only one repeater element ms-mapping-element="${getMappingElementValue(templateElement)}". Found ${repeaterElements.length} repeater elements.`);
-    return null;
-  }
-
-  const repeaterElement = repeaterElements[0];
-  const repeaterTag = repeaterElement.getAttribute('ms-mapping-tag');
-  
-  if (repeaterTag.includes('-')) {
-    console.error(`The element ms-mapping-element="${getMappingElementValue(repeaterElement)}" has ms-mapping-tag="${repeaterTag}". Please remove the dash and any characters following it in the ms-mapping-tag attribute.`);
-    return null;
-  }
-
-  return repeaterElement;
+  return repeaterTag;
 }
 
 function getMappingElementCounts(mappingElements) {
@@ -187,7 +175,7 @@ function getMappingElements(templateElement) {
   const elements = Array.from(templateElement.querySelectorAll('[ms-mapping-tag]'));
   elements.forEach((el) => {
     const tag = el.getAttribute('ms-mapping-tag');
-    if (!isValidTagName(tag)) {
+    if (!isValidTagN(tag)) {
       console.error(`Invalid ms-mapping-tag attribute: "${tag}". It must be either a valid HTML tag name, or a valid HTML tag name followed by a dash and a positive integer. Examples of valid attributes include "p", "p-1", "div-2", etc.`);
       throw new Error('Invalid ms-mapping-tag');
     }
