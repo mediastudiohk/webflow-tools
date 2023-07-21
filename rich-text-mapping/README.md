@@ -16,16 +16,16 @@ This project is a powerful way to organize and manage your content using the Ric
 2. Implement the provided attributes to elements on your Webflow page following the guidelines in the documentation.
 
 ## Documentation
-For a detailed guide on how to use Rich Text Mapping for Webflow, including step-by-step implementation instructions, please visit the [official documentation page](#documentation-link).
+For a detailed guide on how to use Rich Text Mapping for Webflow, including step-by-step implementation instructions, please visit the [official documentation page](https://www.mediastudio.space/webflow-tools/rich-text-mapping).
 
 ## Examples
-Check out our [working examples](#examples-link) to see this solution in action. 
+Check out our [working examples](https://www.mediastudio.space/webflow-tools/rich-text-mapping#examples) to see this solution in action. 
 
 ## Contributing
 Contributions to the project are welcome! Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
 
 ## Questions?
-If you encounter any issues or have questions, check out the [FAQ section](#faq-link) in our documentation or create an issue on Github.
+If you encounter any issues or have questions, check out the [FAQ section](https://www.mediastudio.space/webflow-tools/rich-text-mapping#faq) in our documentation or create an issue on Github.
 
 ## License
 This project is open-source and available under the [MIT License](#license-link).
