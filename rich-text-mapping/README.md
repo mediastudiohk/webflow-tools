@@ -28,4 +28,4 @@ Contributions to the project are welcome! Feel free to fork the repository and s
 If you encounter any issues or have questions, check out the [FAQ section](https://www.mediastudio.space/webflow-tools/rich-text-mapping#faq) in our documentation or create an issue on Github.
 
 ## License
-This project is open-source and available under the [MIT License](#license-link).
+This project is open-source and available under the [Apache License](https://github.com/mediastudiohk/webflow-tools/blob/main/LICENSE).
